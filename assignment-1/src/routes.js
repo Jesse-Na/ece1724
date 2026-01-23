@@ -13,6 +13,12 @@ const {
 	validateQueryParams,
 } = require("./middleware");
 
+// Helper function to convert papers date fields to ISO 8601
+const toISODateTime = (paper) => {
+	paper.created_at = paper.created_at.replace(" ", "T") + ".000Z";
+	paper.updated_at = paper.updated_at.replace(" ", "T") + ".000Z";
+};
+
 // ------------------------------------------------------------
 // GET /api/papers
 //
@@ -26,7 +32,6 @@ const {
 // ------------------------------------------------------------
 router.get("/papers", validateQueryParams, async (req, res, next) => {
 	try {
-		console.log(req.query);
 		const filters = {
 			year: req.query.year || null,
 			published_in: req.query.published_in || null,
@@ -35,6 +40,11 @@ router.get("/papers", validateQueryParams, async (req, res, next) => {
 		};
 
 		const papers = await db.getAllPapers(filters);
+
+		papers.forEach((element) => {
+			toISODateTime(element);
+		});
+
 		res.status(200).json(papers);
 	} catch (error) {
 		// Forward unexpected errors to the error handler (500)
@@ -54,6 +64,7 @@ router.get("/papers/:id", validateId, async (req, res, next) => {
 			return res.status(404).json({ error: "Paper not found" });
 		}
 
+		toISODateTime(paper);
 		res.status(200).json(paper);
 	} catch (error) {
 		next(error);
@@ -75,6 +86,7 @@ router.post("/papers", async (req, res, next) => {
 		}
 
 		const paper = await db.createPaper(req.body);
+		toISODateTime(paper);
 		res.status(201).json(paper);
 	} catch (error) {
 		next(error);
@@ -110,7 +122,7 @@ router.put("/papers/:id", validateId, async (req, res, next) => {
 		};
 
 		const updatedPaper = await db.updatePaper(paperId, newPaper);
-		console.log(updatedPaper);
+		toISODateTime(updatedPaper);
 		res.status(200).json(updatedPaper);
 	} catch (error) {
 		next(error);
