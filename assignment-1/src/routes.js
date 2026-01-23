@@ -26,6 +26,7 @@ const {
 // ------------------------------------------------------------
 router.get("/papers", validateQueryParams, async (req, res, next) => {
 	try {
+		console.log(req.query);
 		const filters = {
 			year: req.query.year || null,
 			published_in: req.query.published_in || null,
@@ -35,11 +36,6 @@ router.get("/papers", validateQueryParams, async (req, res, next) => {
 
 		const papers = await db.getAllPapers(filters);
 		res.status(200).json(papers);
-
-		// TODO:
-		// - Call the database function to retrieve papers
-		// - Return the result as JSON
-		// - Status code: 200
 	} catch (error) {
 		// Forward unexpected errors to the error handler (500)
 		next(error);
@@ -53,13 +49,12 @@ router.get("/papers", validateQueryParams, async (req, res, next) => {
 // ------------------------------------------------------------
 router.get("/papers/:id", validateId, async (req, res, next) => {
 	try {
-		// TODO:
-		// - Retrieve the paper by ID
-		// - If not found, return:
-		//     Status: 404
-		//     { "error": "Paper not found" }
-		// - If found, return the paper as JSON
-		// - Status code: 200
+		const paper = await db.getPaperById(Number(req.params.id));
+		if (!paper) {
+			return res.status(404).json({ error: "Paper not found" });
+		}
+
+		res.status(200).json(paper);
 	} catch (error) {
 		next(error);
 	}
@@ -74,14 +69,13 @@ router.post("/papers", async (req, res, next) => {
 	try {
 		const errors = validatePaper(req.body);
 		if (errors.length > 0) {
-			// TODO:
-			// - Return status 400 with validation error information
+			return res
+				.status(400)
+				.json({ error: "Validation Error", messages: errors });
 		}
 
-		// TODO:
-		// - Create a new paper using the database
-		// - Return the created paper as JSON
-		// - Status code: 201
+		const paper = await db.createPaper(req.body);
+		res.status(201).json(paper);
 	} catch (error) {
 		next(error);
 	}
@@ -99,17 +93,25 @@ router.put("/papers/:id", validateId, async (req, res, next) => {
 	try {
 		const errors = validatePaper(req.body);
 		if (errors.length > 0) {
-			// TODO:
-			// - Return status 400 with validation error information
+			return res
+				.status(400)
+				.json({ error: "Validation Error", messages: errors });
 		}
 
-		// TODO:
-		// - Update the paper with the given ID
-		// - If the paper does not exist, return:
-		//     Status: 404
-		//     { "error": "Paper not found" }
-		// - If updated, return the updated paper as JSON
-		// - Status code: 200
+		const paperId = Number(req.params.id);
+		const paper = await db.getPaperById(paperId);
+		if (!paper) {
+			return res.status(404).json({ error: "Paper not found" });
+		}
+
+		const newPaper = {
+			...paper,
+			...req.body,
+		};
+
+		const updatedPaper = await db.updatePaper(paperId, newPaper);
+		console.log(updatedPaper);
+		res.status(200).json(updatedPaper);
 	} catch (error) {
 		next(error);
 	}
@@ -122,13 +124,13 @@ router.put("/papers/:id", validateId, async (req, res, next) => {
 // ------------------------------------------------------------
 router.delete("/papers/:id", validateId, async (req, res, next) => {
 	try {
-		// TODO:
-		// - Check whether the paper exists
-		// - If not found, return:
-		//     Status: 404
-		//     { "error": "Paper not found" }
-		// - If found, delete it
-		// - Return status 204 with an empty body
+		const paper = await db.getPaperById(Number(req.params.id));
+		if (!paper) {
+			return res.status(404).json({ error: "Paper not found" });
+		}
+
+		await db.deletePaper(Number(req.params.id));
+		res.status(204).send();
 	} catch (error) {
 		next(error);
 	}

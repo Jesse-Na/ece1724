@@ -21,17 +21,6 @@ const db = new sqlite3.Database("./paper_management.db", (err) => {
 	}
 });
 
-// ------------------------------------------------------------
-// TODO: Create a table named `papers`
-//
-// The table schema must match the assignment handout exactly.
-// You should execute a CREATE TABLE IF NOT EXISTS statement.
-//
-// Hint:
-// - SQLite provides CURRENT_TIMESTAMP for timestamps
-// - created_at and updated_at should be set automatically
-// ------------------------------------------------------------
-
 db.run(
 	`
   CREATE TABLE IF NOT EXISTS papers (
@@ -49,7 +38,7 @@ db.run(
 		} else {
 			console.log("papers table ready");
 		}
-	}
+	},
 );
 
 // ------------------------------------------------------------
@@ -76,38 +65,21 @@ const dbOperations = {
 	// - After inserting, query the paper again by ID
 	// ----------------------------------------------------------
 	createPaper: async (paper) => {
-		// TODO: implement
-		//
-		// Example structure (for reference only):
-		//
-		// const newId = await new Promise((resolve, reject) => {
-		//   db.run(
-		//     "INSERT INTO ...",
-		//     [/* values */],
-		//     function (err) {
-		//       if (err) reject(err);
-		//       else resolve(this.lastID);
-		//     }
-		//   );
-		// });
-		//
-		// return await dbOperations.getPaperById(newId);
-
-		const newId = await new Promise((resolve, reject) => {
+		const paperId = await new Promise((resolve, reject) => {
 			db.run(
 				`
-        INSERT INTO papers (title, authors, published_in, year)
-        VALUES (?. ?, ?, ?)
-        `,
+				INSERT INTO papers (title, authors, published_in, year)
+				VALUES (?, ?, ?, ?)
+				`,
 				[paper.title, paper.authors, paper.published_in, paper.year],
 				function (err) {
 					if (err) reject(err);
 					else resolve(this.lastID);
-				}
+				},
 			);
 		});
 
-		return await dbOperations.getPaperById(newId);
+		return await dbOperations.getPaperById(paperId);
 	},
 
 	// ----------------------------------------------------------
@@ -131,7 +103,6 @@ const dbOperations = {
 	// - Use db.all() to retrieve multiple rows
 	// ----------------------------------------------------------
 	getAllPapers: async (filters = {}) => {
-		// TODO: implement
 		const results = await new Promise((resolve, reject) => {
 			let queryBuilder = ["SELECT * FROM papers WHERE 1=1"];
 			let values = [];
@@ -177,7 +148,12 @@ const dbOperations = {
 	// - Use db.get()
 	// ----------------------------------------------------------
 	getPaperById: async (id) => {
-		// TODO: implement
+		return await new Promise((resolve, reject) => {
+			db.get("SELECT * FROM papers WHERE id = ?", [id], (err, row) => {
+				if (err) reject(err);
+				else resolve(row);
+			});
+		});
 	},
 
 	// ----------------------------------------------------------
@@ -199,7 +175,27 @@ const dbOperations = {
 	// - After updating, query the paper again by ID
 	// ----------------------------------------------------------
 	updatePaper: async (id, paper) => {
-		// TODO: implement
+		await new Promise((resolve, reject) => {
+			db.run(
+				`
+				UPDATE papers SET title = ?, authors = ?, published_in = ?, year = ?, updated_at = CURRENT_TIMESTAMP
+				WHERE id = ?
+				`,
+				[
+					paper.title,
+					paper.authors,
+					paper.published_in,
+					paper.year,
+					id,
+				],
+				function (err) {
+					if (err) reject(err);
+					else resolve();
+				},
+			);
+		});
+
+		return await dbOperations.getPaperById(id);
 	},
 
 	// ----------------------------------------------------------
@@ -217,7 +213,12 @@ const dbOperations = {
 	// - Use db.run() for DELETE
 	// ----------------------------------------------------------
 	deletePaper: async (id) => {
-		// TODO: implement
+		return await new Promise((resolve, reject) => {
+			db.run("DELETE FROM papers WHERE id = ?", [id], function (err) {
+				if (err) reject(err);
+				else resolve();
+			});
+		});
 	},
 };
 

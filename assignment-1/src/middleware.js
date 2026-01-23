@@ -54,15 +54,38 @@ const errorHandler = (err, req, res, next) => {
 // ------------------------------------------------------------
 const validatePaper = (paper) => {
 	const errors = [];
+	if (
+		paper.title === undefined ||
+		paper.title === null ||
+		paper.title.toString().trim() === ""
+	) {
+		errors.push("Title is required");
+	}
 
-	// TODO: implement validation logic
+	if (
+		paper.authors === undefined ||
+		paper.authors === null ||
+		paper.authors.toString().trim() === ""
+	) {
+		errors.push("Authors are required");
+	}
 
-	// Required error messages:
-	// - "Title is required"
-	// - "Authors are required"
-	// - "Published venue is required"
-	// - "Published year is required"
-	// - "Valid year after 1900 is required"
+	if (
+		paper.published_in === undefined ||
+		paper.published_in === null ||
+		paper.published_in.toString().trim() === ""
+	) {
+		errors.push("Published venue is required");
+	}
+
+	if (paper.year === undefined || paper.year === null || paper.year === "") {
+		errors.push("Published year is required");
+	} else {
+		const year = Number(paper.year);
+		if (!Number.isInteger(year) || year <= 1900) {
+			errors.push("Valid year after 1900 is required");
+		}
+	}
 
 	return errors;
 };
@@ -85,10 +108,14 @@ const validatePaper = (paper) => {
 // If valid, call next() to continue.
 // ------------------------------------------------------------
 const validateId = (req, res, next) => {
-	// TODO: implement ID validation
-	// Hint:
-	// - ID should be a positive integer
-	// - Convert req.params.id to a number before checking
+	const id = Number(req.params.id);
+	if (!Number.isInteger(id) || id <= 0) {
+		return res
+			.status(400)
+			.json({ error: "Validation Error", message: "Invalid ID format" });
+	}
+
+	next();
 };
 
 // ------------------------------------------------------------
@@ -114,7 +141,32 @@ const validateId = (req, res, next) => {
 // If all parameters are valid, call next().
 // ------------------------------------------------------------
 const validateQueryParams = (req, res, next) => {
-	// TODO: implement query parameter validation
+	const error = {
+		error: "Validation Error",
+		message: "Invalid query parameter format",
+	};
+	const params = req.query;
+	if (params.year !== undefined) {
+		const year = Number(params.year);
+		if (!Number.isInteger(year) || year <= 1900) {
+			return res.status(400).json(error);
+		}
+	}
+
+	if (params.limit !== undefined) {
+		const limit = Number(params.limit);
+		if (!Number.isInteger(limit) || limit < 1 || limit > 100) {
+			return res.status(400).json(error);
+		}
+	}
+
+	if (params.offset !== undefined) {
+		const offset = Number(params.offset);
+		if (!Number.isInteger(offset) || offset < 0) {
+			return res.status(400).json(error);
+		}
+	}
+
 	next();
 };
 
