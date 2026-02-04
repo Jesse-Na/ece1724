@@ -1,2 +1,7 @@
 node_modules/
 paper_management.db
+.env
+node_modules
+generated
+logfile
+prisma/migrations
