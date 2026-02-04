@@ -24,10 +24,11 @@ const router = Router();
 router.get(
   "/",
   // TODO: attach validatePaperQueryParams middleware
+  middleware.validatePaperQueryParams,
   async (req, res, next) => {
     try {
       // TODO: read validated query params from res.locals
-      // const { paperQuery } = res.locals as ValidatedLocals;
+      const { paperQuery } = res.locals as ValidatedLocals;
       // TODO: apply defaults for limit and offset
       // TODO: call db.getAllPapers
       // TODO: res.json(result);

@@ -1,5 +1,7 @@
 // Centralized custom types used across routes, middleware, and database layer.
 
+import { Author, Paper } from "../generated/prisma/client";
+
 /**
  * Provided: Raw author data coming from request bodies.
  * Fields are optional because user input may be incomplete.
@@ -19,6 +21,10 @@ export type AuthorBody = {
  */
 export type PaperBody = {
   // TODO
+  title?: string;
+  published_in?: string;
+  year?: number;
+  authors?: Author[];
 };
 
 /**
@@ -30,6 +36,10 @@ export type PaperBody = {
  */
 export type AuthorCreateData = {
   // TODO
+  name: string;
+  email: string | null;
+  affiliation: string | null;
+  papers: Paper[];
 };
 
 /**
@@ -41,6 +51,10 @@ export type AuthorCreateData = {
  */
 export type PaperCreateData = {
   // TODO
+  title: string;
+  published_in: string;
+  year: number;
+  authors: Author[];
 };
 
 /**
