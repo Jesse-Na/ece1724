@@ -78,6 +78,50 @@ export const validatePaperInput = (paper: PaperBody): string[] => {
   // TODO: validate paper.authors exists and is a non-empty array
 
   // TODO: validate each author has a valid name
+  if (
+    paper.title === undefined ||
+    paper.title === null ||
+    paper.title.trim() === ""
+  ) {
+    errors.push("Title is required");
+  }
+
+  if (
+    paper.authors === undefined ||
+    paper.authors === null ||
+    paper.authors.length === 0
+  ) {
+    errors.push("At least one author is required");
+  } else {
+    for (let i = 0; i < paper.authors.length; i++) {
+      const author = paper.authors[i];
+      if (
+        author.name === undefined ||
+        author.name === null ||
+        author.name.trim() === ""
+      ) {
+        errors.push("Author name is required");
+        break;
+      }
+    }
+  }
+
+  if (
+    paper.publishedIn === undefined ||
+    paper.publishedIn === null ||
+    paper.publishedIn.trim() === ""
+  ) {
+    errors.push("Published venue is required");
+  }
+
+  if (paper.year === undefined || paper.year === null) {
+    errors.push("Published year is required");
+  } else {
+    const year = paper.year;
+    if (isNaN(year) || !Number.isInteger(year) || year <= 1900) {
+      errors.push("Valid year after 1900 is required");
+    }
+  }
 
   return errors;
 };
@@ -123,12 +167,19 @@ export const validateResourceId = (
   next: NextFunction,
 ) => {
   // TODO: read the raw id from req.params.id as a string
+  const id = Number(req.params.id as string);
   // TODO: validate it is a positive integer
+  if (isNaN(id) || !Number.isInteger(id) || Number(id) <= 0) {
+    return res
+      .status(400)
+      .json({ error: "Validation Error", message: "Invalid ID format" });
+  }
   // TODO: if invalid, return res.status(400).json({ error: ..., message: ... })
 
   // TODO: convert to number
 
   // TODO: store validated id into res.locals.id (use type ValidatedLocals)
+  res.locals.id = id;
 
   // TODO: next();
   next();
@@ -191,19 +242,57 @@ export const validatePaperQueryParams = (
   try {
     const parsed: ValidatedPaperQuery = {};
 
+    const params = req.query;
     // TODO: validate year (if provided)
+    if (params.year !== undefined) {
+      const year = Number(params.year);
+      if (isNaN(year) || !Number.isInteger(year) || year <= 1900) {
+        throw new Error();
+      }
+
+      parsed.year = year;
+    }
 
     // TODO: validate publishedIn (if provided)
+    if (params.publishedIn !== undefined) {
+      parsed.publishedIn = params.publishedIn as string;
+    }
 
     // TODO: validate limit (if provided)
+    if (params.limit !== undefined) {
+      const limit = Number(params.limit);
+      if (
+        isNaN(limit) ||
+        !Number.isInteger(limit) ||
+        limit < 1 ||
+        limit > 100
+      ) {
+        throw new Error();
+      }
+
+      parsed.limit = limit;
+    }
 
     // TODO: validate offset (if provided)
+    if (params.offset !== undefined) {
+      const offset = Number(params.offset);
+      if (isNaN(offset) || !Number.isInteger(offset) || offset < 0) {
+        throw new Error();
+      }
+
+      parsed.offset = offset;
+    }
 
     // TODO: store parsed into res.locals.paperQuery
+    res.locals.paperQuery = parsed;
 
     next();
   } catch {
     // TODO: respond with HTTP 400 and a JSON validation error
+    res.status(400).json({
+      error: "Validation Error",
+      message: "Invalid query parameter format",
+    });
   }
 };
 

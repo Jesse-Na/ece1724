@@ -51,6 +51,26 @@ async function findOrCreateAuthorId(
   // 1) Try prisma.author.findFirst({ where: ..., orderBy: { id: "asc" } })
   // 2) If found, return { id: existing.id }
   // 3) Otherwise prisma.author.create({ data: ... }) and return { id: created.id }
+  const authorId = await prisma.author.findFirst({
+    select: { id: true },
+    where: {
+      name: author.name,
+      email: author.email,
+      affiliation: author.affiliation,
+    },
+    orderBy: { id: "asc" },
+  });
+
+  if (authorId) return authorId;
+
+  return await prisma.author.create({
+    select: { id: true },
+    data: {
+      name: author.name,
+      email: author.email,
+      affiliation: author.affiliation,
+    },
+  });
 }
 
 // -------------------------
@@ -79,6 +99,20 @@ export const db = {
     // Note:
     // Using a helper like `findOrCreateAuthorId` is one valid approach.
     // You may implement createPaper in other ways.
+    const authors = paperData.authors;
+    const authorIds = await Promise.all(
+      authors.map((author) => findOrCreateAuthorId(author)),
+    );
+
+    return await prisma.paper.create({
+      data: {
+        title: paperData.title,
+        publishedIn: paperData.publishedIn,
+        year: paperData.year,
+        authors: { connect: authorIds },
+      },
+      include: { authors: { orderBy: { id: "asc" } } },
+    });
   },
 
   /**
@@ -96,6 +130,18 @@ export const db = {
     const { year, publishedIn, limit = 10, offset = 0 } = filters;
 
     const where: Prisma.PaperWhereInput = {};
+
+    if (year !== undefined) {
+      where.year = { equals: year };
+    }
+
+    if (publishedIn !== undefined) {
+      where.publishedIn = {
+        startsWith: `%${publishedIn}%`,
+        endsWith: `%${publishedIn}%`,
+        mode: "insensitive",
+      };
+    }
     // TODO: Create a Prisma `where` object for filtering papers
     // - If `year` is provided, filter by exact year
     // - If `publishedIn` is provided, perform a case-insensitive partial match
@@ -113,12 +159,21 @@ export const db = {
     // - order authors by id (ascending)
     // - apply `limit` and `offset`
 
-    const [papers, total] = await prisma.$transaction([]);
+    const [papers, total] = await prisma.$transaction([
+      prisma.paper.findMany({
+        where,
+        include: { authors: { orderBy: { id: "asc" } } },
+        orderBy: { id: "asc" },
+        take: limit,
+        skip: offset,
+      }),
+      prisma.paper.count({ where }),
+    ]);
 
     // TODO: Return an object with:
     // { papers, total, limit, offset }
-  }
-
+    return { papers, total, limit, offset };
+  },
 
   /**
    * Get a single paper by id.
@@ -128,6 +183,10 @@ export const db = {
    */
   async getPaperById(id: number) {
     // Hint: use await prisma.paper.findUnique()
+    return await prisma.paper.findUnique({
+      where: { id },
+      include: { authors: { orderBy: { id: "asc" } } },
+    });
   },
 
   /**
@@ -144,16 +203,16 @@ export const db = {
    *   - clear existing links (set: [])
    *   - connect new ones (connect: authorIds)
    */
-  async updatePaper(id: number, paperData: PaperCreateData) {
-    // TODO: compute authorIds from paperData.authors
-    // - each author must exist in the database
-    // - you may need to query or create authors first
+  // async updatePaper(id: number, paperData: PaperCreateData) {
+  //   // TODO: compute authorIds from paperData.authors
+  //   // - each author must exist in the database
+  //   // - you may need to query or create authors first
 
-    // TODO: perform prisma.paper.update in a try/catch
-    // - update paper fields and re-connect authors
-    // - on Prisma P2025 => return null
-    // - otherwise, rethrow the error
-  }
+  //   // TODO: perform prisma.paper.update in a try/catch
+  //   // - update paper fields and re-connect authors
+  //   // - on Prisma P2025 => return null
+  //   // - otherwise, rethrow the error
+  // }
 
   /**
    * Delete a paper by id.
@@ -162,12 +221,12 @@ export const db = {
    * - If the paper existed and was deleted, return true
    * - If the paper did not exist, return false (normalize Prisma P2025)
    */
-  async deletePaper(id: number) {
-    // TODO: prisma.paper.delete in try/catch
-    // - on P2025 => return false
-    // - otherwise rethrow
-    // - on success => return true
-  },
+  // async deletePaper(id: number) {
+  //   // TODO: prisma.paper.delete in try/catch
+  //   // - on P2025 => return false
+  //   // - otherwise rethrow
+  //   // - on success => return true
+  // },
 
   // -------------------------
   // Authors
@@ -180,9 +239,9 @@ export const db = {
    * - Create the author with optional nullable fields
    * - Include papers ordered by id ascending in the returned object
    */
-  async createAuthor(authorData: AuthorCreateData) {
-    // TODO: prisma.author.create({ data: ..., include: { papers: { orderBy: { id: "asc" }}}})
-  },
+  // async createAuthor(authorData: AuthorCreateData) {
+  //   // TODO: prisma.author.create({ data: ..., include: { papers: { orderBy: { id: "asc" }}}})
+  // },
 
   /**
    * Get authors with optional filters and pagination.
@@ -195,20 +254,20 @@ export const db = {
    * - Return authors ordered by id ascending
    * - Also return total count matching filters
    */
-  async getAllAuthors(filters: GetAuthorsFilters) {
-    const { name, affiliation, limit = 10, offset = 0 } = filters;
+  // async getAllAuthors(filters: GetAuthorsFilters) {
+  //   const { name, affiliation, limit = 10, offset = 0 } = filters;
 
-    // TODO: build a Prisma.AuthorWhereInput object
-    const where: Prisma.AuthorWhereInput = {};
+  //   // TODO: build a Prisma.AuthorWhereInput object
+  //   const where: Prisma.AuthorWhereInput = {};
 
-    // TODO: add `name` contains filter (mode: "insensitive")
-    // TODO: add `affiliation` contains filter (mode: "insensitive")
+  //   // TODO: add `name` contains filter (mode: "insensitive")
+  //   // TODO: add `affiliation` contains filter (mode: "insensitive")
 
-    // TODO: transaction with findMany + count
-    // const [authors, total] = await prisma.$transaction([]);
+  //   // TODO: transaction with findMany + count
+  //   // const [authors, total] = await prisma.$transaction([]);
 
-    // TODO: return { authors, total, limit, offset }
-  },
+  //   // TODO: return { authors, total, limit, offset }
+  // },
 
   /**
    * Get a single author by id.
@@ -216,9 +275,9 @@ export const db = {
    * Requirements:
    * - Return the author (or null) including papers ordered by id ascending
    */
-  async getAuthorById(id: number) {
-    // Hint: use prisma.author.findUnique()
-  },
+  // async getAuthorById(id: number) {
+  //   // Hint: use prisma.author.findUnique()
+  // },
 
   /**
    * Update an author by id.
@@ -227,11 +286,11 @@ export const db = {
    * - If the author does not exist, return null (normalize Prisma P2025)
    * - Include papers ordered by id ascending
    */
-  async updateAuthor(id: number, authorData: AuthorCreateData) {
-    // TODO: prisma.author.update in try/catch
-    // - on P2025 => return null
-    // - otherwise rethrow
-  },
+  // async updateAuthor(id: number, authorData: AuthorCreateData) {
+  //   // TODO: prisma.author.update in try/catch
+  //   // - on P2025 => return null
+  //   // - otherwise rethrow
+  // },
 
   /**
    * Delete an author by id.
@@ -246,14 +305,14 @@ export const db = {
    * - First fetch the author including their papers and each paper's authors
    * - Then check if any paper has only one author
    */
-  async deleteAuthor(id: number) {
-    // TODO: fetch the author with nested include
+  // async deleteAuthor(id: number) {
+  //   // TODO: fetch the author with nested include
 
-    // TODO: if not found, return;
+  //   // TODO: if not found, return;
 
-    // TODO: enforce only-author constraint (throw Error)
+  //   // TODO: enforce only-author constraint (throw Error)
 
-    // TODO: delete the author
-    // Hint: use prisma.author.delete();
-  },
+  //   // TODO: delete the author
+  //   // Hint: use prisma.author.delete();
+  // },
 };

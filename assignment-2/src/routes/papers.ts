@@ -30,8 +30,16 @@ router.get(
       // TODO: read validated query params from res.locals
       const { paperQuery } = res.locals as ValidatedLocals;
       // TODO: apply defaults for limit and offset
+      const filters = {
+        year: paperQuery?.year,
+        publishedIn: paperQuery?.publishedIn,
+        limit: paperQuery?.limit || 10,
+        offset: paperQuery?.offset || 0,
+      };
       // TODO: call db.getAllPapers
+      const papers = await db.getAllPapers(filters);
       // TODO: res.json(result);
+      res.json(papers);
     } catch (e) {
       next(e);
     }
@@ -53,12 +61,17 @@ router.get(
 router.get(
   "/:id",
   // TODO: attach validateResourceId middleware
+  middleware.validateResourceId,
   async (_req, res, next) => {
     try {
       // TODO: use middleware.requireId(res);
+      const id = middleware.requireId(res);
       // TODO: await db.getPaperById
+      const paper = await db.getPaperById(id);
       // TODO: if not found, return 404
+      if (!paper) res.status(404).json({ error: "Paper not found" });
       // TODO: res.json(paper);
+      res.json(paper);
     } catch (e) {
       next(e);
     }
@@ -80,9 +93,17 @@ router.get(
 router.post("/", async (req, res, next) => {
   try {
     // TODO: validate input using middleware.validatePaperInput(req.body)
+    const errors = middleware.validatePaperInput(req.body);
     // TODO: if errors exist, return 400 Validation Error
+    if (errors.length > 0) {
+      return res
+        .status(400)
+        .json({ error: "Validation Error", messages: errors });
+    }
     // TODO:await db.createPaper
+    const paper = await db.createPaper(req.body);
     // TODO: return 201 with created paper
+    res.status(201).json(paper);
   } catch (e) {
     next(e);
   }
