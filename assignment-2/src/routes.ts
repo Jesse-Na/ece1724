@@ -22,7 +22,6 @@ const router = Router();
  */
 
 router.use("/papers", paperRoutes);
-
 router.use("/authors", authorRoutes);
 
 export default router;
