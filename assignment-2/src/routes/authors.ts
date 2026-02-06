@@ -9,12 +9,12 @@ const router = Router();
 // Helper (provided)
 // -----------------------
 function isErrorWithMessage(e: unknown): e is { message: string } {
-  return (
-    typeof e === "object" &&
-    e !== null &&
-    "message" in e &&
-    typeof (e as { message?: unknown }).message === "string"
-  );
+	return (
+		typeof e === "object" &&
+		e !== null &&
+		"message" in e &&
+		typeof (e as { message?: unknown }).message === "string"
+	);
 }
 
 // -----------------------
@@ -34,19 +34,26 @@ function isErrorWithMessage(e: unknown): e is { message: string } {
  * - Return the result as JSON
  */
 router.get(
-  "/",
-  // TODO: attach validateAuthorQueryParams middleware
-  async (req, res, next) => {
-    try {
-      // TODO: read validated query params from res.locals
-      // const { authorQuery } = res.locals as ValidatedLocals;
-      // TODO: apply defaults for limit and offset
-      // TODO: call db.getAllAuthors({ name, affiliation, limit, offset })
-      // TODO: res.json(result);
-    } catch (e) {
-      next(e);
-    }
-  },
+	"/",
+	middleware.validateAuthorQueryParams,
+	async (req, res, next) => {
+		try {
+			const { authorQuery } = res.locals as ValidatedLocals;
+
+			const filters = {
+				name: authorQuery?.name,
+				affiliation: authorQuery?.affiliation,
+				limit: authorQuery?.limit || 10,
+				offset: authorQuery?.offset || 0,
+			};
+
+			const authors = await db.getAllAuthors(filters);
+
+			res.json(authors);
+		} catch (e) {
+			next(e);
+		}
+	},
 );
 
 // -----------------------
@@ -61,20 +68,21 @@ router.get(
  * - If author not found: return 404
  * - Otherwise: return author as JSON
  */
-router.get(
-  "/:id",
-  // TODO: attach validateResourceId middleware
-  async (_req, res, next) => {
-    try {
-      // TODO: extract the validated id using middleware.requireId
-      // TODO: await db.getAuthorById
-      // TODO: if not found, return res.status(404).json({ error: "Author not found" });
-      // TODO: res.json(author);
-    } catch (e) {
-      next(e);
-    }
-  },
-);
+router.get("/:id", middleware.validateResourceId, async (_req, res, next) => {
+	try {
+		const id = middleware.requireId(res);
+
+		const author = await db.getAuthorById(id);
+
+		if (!author) {
+			return res.status(404).json({ error: "Author not found" });
+		}
+
+		res.json(author);
+	} catch (e) {
+		next(e);
+	}
+});
 
 // -----------------------
 // POST /api/authors
@@ -89,14 +97,21 @@ router.get(
  * - Return 201 with created author
  */
 router.post("/", async (req, res, next) => {
-  try {
-    // TODO: validate input using middleware.validateAuthorInput(req.body)
-    // TODO: if errors exist, return 400 Validation Error
-    // TODO: await db.createAuthor
-    // TODO: return 201 with created author
-  } catch (e) {
-    next(e);
-  }
+	try {
+		const errors = middleware.validateAuthorInput(req.body);
+
+		if (errors.length > 0) {
+			return res
+				.status(400)
+				.json({ error: "Validation Error", messages: errors });
+		}
+
+		const author = await db.createAuthor(req.body);
+
+		res.status(201).json(author);
+	} catch (e) {
+		next(e);
+	}
 });
 
 // -----------------------
@@ -113,21 +128,29 @@ router.post("/", async (req, res, next) => {
  * - If author not found: return 404
  * - Otherwise: return updated author
  */
-router.put(
-  "/:id",
-  // TODO: attach validateResourceId middleware
-  async (req, res, next) => {
-    try {
-      // TODO: validate input
-      // TODO: get authorId with middleware.requireId
-      // TODO: const updated = await db.updateAuthor
-      // TODO: if updated is null, return 404
-      // TODO: return updated author
-    } catch (e) {
-      next(e);
-    }
-  },
-);
+router.put("/:id", middleware.validateResourceId, async (req, res, next) => {
+	try {
+		const errors = middleware.validateAuthorInput(req.body);
+
+		if (errors.length > 0) {
+			return res
+				.status(400)
+				.json({ error: "Validation Error", messages: errors });
+		}
+
+		const authorId = middleware.requireId(res);
+
+		const updated = await db.updateAuthor(authorId, req.body);
+
+		if (!updated) {
+			return res.status(404).json({ error: "Author not found" });
+		}
+
+		res.json(updated);
+	} catch (e) {
+		next(e);
+	}
+});
 
 // -----------------------
 // DELETE /api/authors/:id
@@ -144,28 +167,39 @@ router.put(
  * - On success: return 204 No Content
  */
 router.delete(
-  "/:id",
-  // TODO: attach validateResourceId middleware
-  async (_req, res, next) => {
-    try {
-      // TODO: const authorId = middleware.requireId(res);
+	"/:id",
 
-      // TODO: check author existence via db.getAuthorById
-      //       if not found, return 404
+	middleware.validateResourceId,
+	async (_req, res, next) => {
+		try {
+			const authorId = middleware.requireId(res);
 
-      try {
-        // TODO: await db.deleteAuthor
-        // TODO: return 204 No Content
-      } catch (e: unknown) {
-        // TODO: detect "only author" constraint error
-        // Hint: use isErrorWithMessage(e) and check e.message
-        // If matched, return 400 with a Constraint Error
-        throw e;
-      }
-    } catch (e) {
-      next(e);
-    }
-  },
+			const author = await db.getAuthorById(authorId);
+
+			if (!author) {
+				return res.status(404).json({ error: "Author not found" });
+			}
+
+			try {
+				await db.deleteAuthor(authorId);
+
+				res.status(204).send();
+			} catch (e: unknown) {
+				if (
+					isErrorWithMessage(e) &&
+					e.message.includes("only author")
+				) {
+					return res.status(400).json({
+						error: "Constraint Error",
+						message: e.message,
+					});
+				}
+				throw e;
+			}
+		} catch (e) {
+			next(e);
+		}
+	},
 );
 
 export default router;

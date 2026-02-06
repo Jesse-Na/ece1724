@@ -21,30 +21,24 @@ const router = Router();
  * - Call db.getAllPapers(...) with parsed values
  * - Return the result as JSON
  */
-router.get(
-  "/",
-  // TODO: attach validatePaperQueryParams middleware
-  middleware.validatePaperQueryParams,
-  async (req, res, next) => {
-    try {
-      // TODO: read validated query params from res.locals
-      const { paperQuery } = res.locals as ValidatedLocals;
-      // TODO: apply defaults for limit and offset
-      const filters = {
-        year: paperQuery?.year,
-        publishedIn: paperQuery?.publishedIn,
-        limit: paperQuery?.limit || 10,
-        offset: paperQuery?.offset || 0,
-      };
-      // TODO: call db.getAllPapers
-      const papers = await db.getAllPapers(filters);
-      // TODO: res.json(result);
-      res.json(papers);
-    } catch (e) {
-      next(e);
-    }
-  },
-);
+router.get("/", middleware.validatePaperQueryParams, async (req, res, next) => {
+	try {
+		const { paperQuery } = res.locals as ValidatedLocals;
+
+		const filters = {
+			year: paperQuery?.year,
+			publishedIn: paperQuery?.publishedIn,
+			limit: paperQuery?.limit || 10,
+			offset: paperQuery?.offset || 0,
+		};
+
+		const papers = await db.getAllPapers(filters);
+
+		res.json(papers);
+	} catch (e) {
+		next(e);
+	}
+});
 
 // -----------------------
 // GET /api/papers/:id
@@ -58,25 +52,19 @@ router.get(
  * - If paper not found: return 404
  * - Otherwise: return paper as JSON
  */
-router.get(
-  "/:id",
-  // TODO: attach validateResourceId middleware
-  middleware.validateResourceId,
-  async (_req, res, next) => {
-    try {
-      // TODO: use middleware.requireId(res);
-      const id = middleware.requireId(res);
-      // TODO: await db.getPaperById
-      const paper = await db.getPaperById(id);
-      // TODO: if not found, return 404
-      if (!paper) res.status(404).json({ error: "Paper not found" });
-      // TODO: res.json(paper);
-      res.json(paper);
-    } catch (e) {
-      next(e);
-    }
-  },
-);
+router.get("/:id", middleware.validateResourceId, async (_req, res, next) => {
+	try {
+		const id = middleware.requireId(res);
+
+		const paper = await db.getPaperById(id);
+
+		if (!paper) res.status(404).json({ error: "Paper not found" });
+
+		res.json(paper);
+	} catch (e) {
+		next(e);
+	}
+});
 
 // -----------------------
 // POST /api/papers
@@ -91,22 +79,21 @@ router.get(
  * - Return 201 with created paper
  */
 router.post("/", async (req, res, next) => {
-  try {
-    // TODO: validate input using middleware.validatePaperInput(req.body)
-    const errors = middleware.validatePaperInput(req.body);
-    // TODO: if errors exist, return 400 Validation Error
-    if (errors.length > 0) {
-      return res
-        .status(400)
-        .json({ error: "Validation Error", messages: errors });
-    }
-    // TODO:await db.createPaper
-    const paper = await db.createPaper(req.body);
-    // TODO: return 201 with created paper
-    res.status(201).json(paper);
-  } catch (e) {
-    next(e);
-  }
+	try {
+		const errors = middleware.validatePaperInput(req.body);
+
+		if (errors.length > 0) {
+			return res
+				.status(400)
+				.json({ error: "Validation Error", messages: errors });
+		}
+
+		const paper = await db.createPaper(req.body);
+
+		res.status(201).json(paper);
+	} catch (e) {
+		next(e);
+	}
 });
 
 // -----------------------
@@ -123,21 +110,28 @@ router.post("/", async (req, res, next) => {
  * - If paper not found: return 404
  * - Otherwise: return updated paper
  */
-router.put(
-  "/:id",
-  // TODO: attach validateResourceId middleware
-  async (req, res, next) => {
-    try {
-      // TODO: validate input
-      // TODO: use middleware.requireId(res)
-      // TODO: const updated = await db.updatePaper
-      // TODO: if updated is null, return 404
-      // TODO: return updated paper
-    } catch (e) {
-      next(e);
-    }
-  },
-);
+router.put("/:id", middleware.validateResourceId, async (req, res, next) => {
+	try {
+		const errors = middleware.validatePaperInput(req.body);
+		if (errors.length > 0) {
+			return res
+				.status(400)
+				.json({ error: "Validation Error", messages: errors });
+		}
+
+		const id = middleware.requireId(res);
+
+		const updated = await db.updatePaper(id, req.body);
+
+		if (!updated) {
+			return res.status(404).json({ error: "Paper not found" });
+		}
+
+		res.json(updated);
+	} catch (e) {
+		next(e);
+	}
+});
 
 // -----------------------
 // DELETE /api/papers/:id
@@ -151,19 +145,25 @@ router.put(
  * - Otherwise: delete and return 204 No Content
  */
 router.delete(
-  "/:id",
-  // TODO: attach validateResourceId middleware
-  async (_req, res, next) => {
-    try {
-      // TODO: use middleware.requireId
-      // TODO: check existence via db.getPaperById
-      //       if not found, return 404
-      // TODO: await db.deletePaper
-      // TODO: return 204 No Content
-    } catch (e) {
-      next(e);
-    }
-  },
+	"/:id",
+	// TODO: attach validateResourceId middleware
+	middleware.validateResourceId,
+	async (_req, res, next) => {
+		try {
+			const id = middleware.requireId(res);
+
+			const paper = await db.getPaperById(id);
+			if (!paper) {
+				return res.status(404).json({ error: "Paper not found" });
+			}
+
+			await db.deletePaper(id);
+
+			res.status(204).end();
+		} catch (e) {
+			next(e);
+		}
+	},
 );
 
 export default router;

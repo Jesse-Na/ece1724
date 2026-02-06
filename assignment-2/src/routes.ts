@@ -2,9 +2,6 @@ import { Router } from "express";
 import paperRoutes from "./routes/papers";
 import authorRoutes from "./routes/authors";
 
-// TODO: Import the paper routes module from "./routes/papers"
-// TODO: Import the author routes module from "./routes/authors"
-
 const router = Router();
 
 /**
@@ -24,9 +21,8 @@ const router = Router();
  * - GET /api/authors/1  → handled by routes/authors.ts (GET "/:id")
  */
 
-// TODO: Mount the paper routes at "/papers"
 router.use("/papers", paperRoutes);
 
-// TODO: Mount the author routes at "/authors"
+router.use("/authors", authorRoutes);
 
 export default router;
