@@ -25,7 +25,7 @@ export default function PaperList() {
 
   const navigate = useNavigate();
 
-  // TODO: Fetch papers from the API when the component mounts.
+  // Fetch papers from the API when the component mounts.
   //
   // Requirements:
   // - Endpoint: GET /api/papers
@@ -35,21 +35,24 @@ export default function PaperList() {
   useEffect(() => {
     const fetchPapers = async () => {
       try {
-        // TODO: fetch("/api/papers")
-        // TODO: if response not ok, throw new Error()
-        // TODO: parse JSON as PapersListResponse
-        // TODO: setPapers(...) with the returned list
+        const response = await fetch("/api/papers");
+        if (!response.ok) {
+          throw new Error();
+        }
+
+        const data: PapersListResponse = await response.json();
+        setPapers(data.papers);
       } catch {
-        // TODO: set error state to "Error loading papers"
+        setError("Error loading papers");
       } finally {
-        // TODO: set loading state to false
+        setLoading(false);
       }
     };
 
     fetchPapers();
   }, []);
 
-  // TODO: Implement delete functionality.
+  // Implement delete functionality.
   //
   // Requirements:
   // - Clicking "Delete" must show confirm() dialog:
@@ -60,51 +63,47 @@ export default function PaperList() {
   //   - On success: show "Paper deleted successfully" and remove it from the list
   //   - On failure: show "Error deleting paper"
   const handleDelete = async (paperId: number, paperTitle: string) => {
-    // TODO: clear previous message
+    setMessage(null);
 
-    // TODO: confirm(...)
+    if (!confirm(`Are you sure you want to delete ${paperTitle}?`)) return;
 
     try {
-      // TODO: fetch(`/api/papers/${paperId}`, { method: "DELETE" })
-      // TODO: if response not ok, throw new Error()
-      // TODO: remove the paper from state
-      // TODO: set message "Paper deleted successfully";
+      const response = await fetch(`/api/papers/${paperId}`, { method: "DELETE" });
+      if (!response.ok) {
+        throw new Error();
+      }
+
+      setPapers(papers.filter((paper) => paper.id !== paperId));
+      setMessage("Paper deleted successfully");
     } catch {
-      // TODO: set message "Error deleting paper";
+      setMessage("Error deleting paper");
     }
   };
 
   // Required state messages
-  if (loading) return <div>/* TODO */</div>;
-  if (error) return <div>/* TODO */</div>;
-  if (papers.length === 0) return <div>/* TODO */</div>;
+  if (loading) return <div>Loading papers... </div>;
+  if (error) return <div>{error}</div>;
+  if (papers.length === 0) return <div>No papers found</div>;
 
   return (
-    <div /* TODO: Style with styles.container */>
-      {/* TODO: Render deletion success/failure message if present */}
-      {message && <div>{/* TODO */}</div>}
+    <div className={styles.container}>
+      {message && <div>{message}</div>}
 
-      {/* TODO: Render paper list */}
       {papers.map((paper) => (
-        <div key={paper.id} /* TODO: Style with styles.paper */>
-          {/* TODO: Title */}
-          <h3 /* TODO: Style with styles.paperTitle */>{/* TODO */}</h3>
+        <div key={paper.id} className={styles.paper}>
+          <h3 className={styles.paperTitle}>{paper.title}</h3>
 
-          {/* TODO: Venue + year */}
           <p>
-            Published in {/* TODO */}, {/* TODO */}
+            Published in {paper.publishedIn}, {paper.year}
           </p>
 
-          {/* TODO: Authors (comma-separated names) */}
-          <p>Authors: {/* TODO */}</p>
+          <p>Authors: {paper.authors.map((author) => author.name).join(", ")}</p>
 
-          {/* TODO: Edit button navigates to /edit/:id */}
-          <button type="button" onClick={/* TODO */}>
+          <button type="button" onClick={() => navigate(`edit/${paper.id}`)}>
             Edit
           </button>
 
-          {/* TODO: Delete button triggers confirmation + deletion */}
-          <button type="button" onClick={/* TODO */}>
+          <button type="button" onClick={() => handleDelete(paper.id, paper.title)}>
             Delete
           </button>
         </div>

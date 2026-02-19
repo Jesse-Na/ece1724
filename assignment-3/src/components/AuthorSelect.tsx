@@ -16,7 +16,7 @@ export default function AuthorSelect({
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  // TODO: Fetch authors from the API when this component mounts.
+  // Fetch authors from the API when this component mounts.
   //
   // Requirements:
   // - Endpoint: GET /api/authors
@@ -24,30 +24,35 @@ export default function AuthorSelect({
   useEffect(() => {
     const fetchAuthors = async () => {
       try {
-        // TODO: fetch("/api/authors")
-        // TODO: if response not ok, throw new Error()
-        // TODO: parse JSON as AuthorsListResponse
-        // TODO: setAuthors(...) with the authors array
+        const response = await fetch("/api/authors");
+        if (!response.ok) {
+          throw new Error();
+        }
+
+        const data: AuthorsListResponse = await response.json();
+        setAuthors(data.authors);
       } catch {
-        // TODO: set error state to "Error loading authors"
+        setError("Error loading authors");
       } finally {
-        // TODO: set loading state to false
+        setLoading(false);
       }
     };
 
     fetchAuthors();
   }, []);
 
-  // TODO: When the user selects/deselects authors, call onChange([...ids]).
-  // Hint: event.target.selectedOptions gives you all currently-selected <option>s.
   const handleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    // TODO: Convert selected option values (strings) into numbers with  Array.from
+    const selected = Array.from(
+      event.target.selectedOptions,
+      (option) => Number(option.value),
+    );
+
+    onChange(selected);
   };
 
   return (
     <div>
-      {/* TODO: Render the required error message above the dropdown */}
-      {error && <div className="error">{/* TODO */}</div>}
+      {error && <div className="error">{error}</div>}
 
       <select
         multiple
@@ -57,14 +62,12 @@ export default function AuthorSelect({
          */
         value={selectedAuthorIds.map(String)}
         onChange={handleChange}
-        // TODO: Disable dropdown during loading or error
-        disabled={/* TODO */}
+        disabled={loading || error !== null}
       >
-        {/* TODO:
-            - If authors is empty (after loading), render:
-              <option disabled>No authors available</option>
-            - Otherwise, render one <option> per author (value = author.id, text = author.name)
-        */}
+        {authors.length === 0 && <option disabled>No authors available</option>}
+        {authors.map((author) => (
+          <option value={author.id}>{author.name}</option>
+        ))}
       </select>
     </div>
   );

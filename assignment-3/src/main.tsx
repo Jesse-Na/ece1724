@@ -5,6 +5,8 @@ import { RouterProvider } from "react-router/dom";
 import "./styles/global.css";
 
 // TODO: Import your route components (Home and EditPaper)
+import Home from "./routes/Home";
+//import EditPaper from "./routes/EditPaper";
 
 // This is the main entry point of your React application
 // You need to set up React Router here to enable client-side routing
@@ -16,10 +18,13 @@ import "./styles/global.css";
 //    Note: ":id" is a URL parameter that will be used to identify which paper to edit
 
 // TODO: Define your router configuration here
+const router = createBrowserRouter([
+  { path: "/", element: <Home /> },
+  // { path: "/edit/:id", element: <EditPaper /> }
+])
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    {/* TODO: Replace null with your Router instance */}
-    <RouterProvider router={null} />
+    <RouterProvider router={router} />
   </StrictMode>,
 );

@@ -43,9 +43,32 @@ export default function PaperForm({ paper, onSubmit }: PaperFormProps) {
    * - Call onSubmit(formData) only if validation passes.
    */
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    // TODO: prevent page reload
+    e.preventDefault();
 
-    // TODO: validation logic here
+    if (formData.title.trim() === "") {
+      setError("Title is required");
+      return;
+    }
+
+    if (formData.publishedIn.trim() === "") {
+      setError("Publication venue is required");
+      return;
+    }
+
+    if (formData.year === 0) {
+      setError("Publication year is required")
+      return;
+    }
+
+    if (!Number.isInteger(formData.year) || formData.year <= 1900) {
+      setError("Valid year after 1900 is required");
+      return;
+    }
+
+    if (!paper && formData.authorIds.length === 0) {
+      setError("Please select at least one author");
+      return;
+    }
 
     setError(null);
 
@@ -54,7 +77,6 @@ export default function PaperForm({ paper, onSubmit }: PaperFormProps) {
   };
 
   /**
-   * TODO:
    * Handle changes for text and number inputs.
    *
    * Hint:
@@ -65,12 +87,15 @@ export default function PaperForm({ paper, onSubmit }: PaperFormProps) {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
 
-    // TODO: update formData correctly
+    if (name === "year") {
+      setFormData({...formData, year: Number(value)});
+    } else {
+      setFormData({...formData, [name]: value});
+    }
   };
 
   return (
-    <form onSubmit={handleSubmit} /* TODO: Style with styles.form */>
-      {/* TODO: Render validation error if present */}
+    <form onSubmit={handleSubmit} className={styles.form}>
       {error && <div className="error">{error}</div>}
 
       <div>
@@ -79,8 +104,8 @@ export default function PaperForm({ paper, onSubmit }: PaperFormProps) {
           type="text"
           id="title"
           name="title"
-          value={/* TODO */}
-          onChange={/* TODO */}
+          value={formData.title}
+          onChange={handleChange}
         />
       </div>
 
@@ -90,8 +115,8 @@ export default function PaperForm({ paper, onSubmit }: PaperFormProps) {
           type="text"
           id="publishedIn"
           name="publishedIn"
-          value={/* TODO */}
-          onChange={/* TODO */}
+          value={formData.publishedIn}
+          onChange={handleChange}
         />
       </div>
 
@@ -101,8 +126,8 @@ export default function PaperForm({ paper, onSubmit }: PaperFormProps) {
           type="number"
           id="year"
           name="year"
-          value={/* TODO */}
-          onChange={/* TODO */}
+          value={formData.year}
+          onChange={handleChange}
         />
       </div>
 
@@ -130,13 +155,8 @@ export default function PaperForm({ paper, onSubmit }: PaperFormProps) {
       <div>
         <button type="submit">{paper ? "Update Paper" : "Create Paper"}</button>
 
-        {/* TODO:
-            In edit mode only:
-            - Render a Cancel button
-            - Clicking it should navigate back to "/"
-        */}
         {paper && (
-          <button type="button" onClick={/* TODO */}>
+          <button type="button" onClick={() => navigate("/")}>
             Cancel
           </button>
         )}

@@ -43,6 +43,13 @@ export type Paper = {
    * Define the Paper type based on the JSON returned
    * from GET /api/papers and GET /api/papers/:id.
    */
+  id: number;
+  title: string;
+  publishedIn: string;
+  year: number;
+  createdAt: string;
+  updatedAt: string;
+  authors: Author[];
 };
 
 // =====================
@@ -62,6 +69,10 @@ export type AuthorsListResponse = {
    * Define the shape of the response returned by
    * GET /api/authors.
    */
+  authors: Author[];
+  total: number;
+  limit: number;
+  offset: number;
 };
 
 // =====================

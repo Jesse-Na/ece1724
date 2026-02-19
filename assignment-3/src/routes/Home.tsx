@@ -76,16 +76,15 @@ export default function Home() {
   };
 
   return (
-    <div /* TODO: Style with styles.container */>
-      <h1 /* TODO: Style with styles.title */>Paper Management System</h1>
+    <div className={styles.container}>
+      <h1 className={styles.title}>Paper Management System</h1>
 
-      {/* TODO: Render success/error message if present */}
-      {message && <div>{/* TODO */}</div>}
+      {message && <div>{message}</div>}
 
-      <h2 /* TODO: Style with styles.sectionTitle */>Create New Paper</h2>
+      <h2 className={styles.sectionTitle}>Create New Paper</h2>
       <PaperForm onSubmit={handleCreatePaper} />
 
-      <h2 /* TODO: Style with styles.sectionTitle */>Papers</h2>
+      <h2 className={styles.sectionTitle}>Papers</h2>
       <PaperList />
     </div>
   );
