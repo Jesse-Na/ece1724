@@ -28,7 +28,6 @@ export default function PaperForm({ paper, onSubmit }: PaperFormProps) {
   const [error, setError] = useState<string | null>(null);
 
   /**
-   * TODO:
    * Implement validation in EXACT required order:
    *
    * 1. Title is required
@@ -56,7 +55,7 @@ export default function PaperForm({ paper, onSubmit }: PaperFormProps) {
     }
 
     if (formData.year === 0) {
-      setError("Publication year is required")
+      setError("Publication year is required");
       return;
     }
 
@@ -88,9 +87,9 @@ export default function PaperForm({ paper, onSubmit }: PaperFormProps) {
     const { name, value } = e.target;
 
     if (name === "year") {
-      setFormData({...formData, year: Number(value)});
+      setFormData({ ...formData, year: Number(value) });
     } else {
-      setFormData({...formData, [name]: value});
+      setFormData({ ...formData, [name]: value });
     }
   };
 

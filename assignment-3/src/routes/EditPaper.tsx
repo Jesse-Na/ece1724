@@ -21,7 +21,7 @@ export default function EditPaper() {
    */
   const [message, setMessage] = useState<string | null>(null);
 
-  // TODO: Fetch paper details on mount and when id changes.
+  // Fetch paper details on mount and when id changes.
   //
   // Requirements:
   // - Endpoint: GET /api/papers/:id
@@ -37,21 +37,29 @@ export default function EditPaper() {
 
     const fetchPaper = async () => {
       try {
-        // TODO: fetch(`/api/papers/${id}`)
-        // TODO: if status === 404 -> setPaper(null) and return
-        // TODO: if not ok -> throw new Error()
-        // TODO: parse JSON as Paper and setPaper(...)
+        const response = await fetch(`/api/papers/${id}`);
+        if (response.status === 404) {
+          setPaper(null);
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error();
+        }
+
+        const data: Paper = await response.json();
+        setPaper(data);
       } catch {
-        // TODO: set loadError state to true so UI shows "Error loading paper"
+        setLoadError(true);
       } finally {
-        // TODO: set loading state to false
+        setLoading(false);
       }
     };
 
     fetchPaper();
   }, [id]);
 
-  // TODO: Implement update behavior.
+  // Implement update behavior.
   //
   // Requirements:
   // - Authors are NOT editable:
@@ -69,36 +77,44 @@ export default function EditPaper() {
     if (!id || !paper) return;
 
     try {
-      // TODO: clear previous message (set to null)
+      setMessage(null);
 
-      // TODO:
       // Build the update payload (PaperUpdatePayload):
       // - title, publishedIn, year come from paperData
       // - authors must come from the ORIGINAL fetched paper (paper.authors)
       const updatePayload: PaperUpdatePayload = {
-        title: // TODO,
-        publishedIn: // TODO,
-        year: // TODO,
-        authors: [
-          // TODO: map paper.authors -> minimal author objects expected by backend
-        ],
+        title: paperData.title,
+        publishedIn: paperData.publishedIn,
+        year: paperData.year,
+        authors: paper.authors.map((author) => {
+          return {
+            name: author.name,
+            email: author.email,
+            affiliation: author.affiliation,
+          };
+        }),
       };
 
-      // TODO: send PUT request with JSON body
-      // const res = await fetch(`/api/papers/${id}`, { method: "PUT", headers: ..., body: ... })
-      // TODO: if not ok, throw new Error()
+      const response = await fetch(`/api/papers/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatePayload),
+      });
 
-      // TODO: set message to "Paper updated successfully"
+      if (!response.ok) {
+        throw new Error();
+      }
 
-      // TODO: after 3 seconds, navigate("/")
+      setMessage("Paper updated successfully");
+      setTimeout(() => navigate("/"), 3000);
     } catch {
-      // TODO: set message to "Error updating paper"
+      setMessage("Error updating paper");
     }
   };
 
-  if (loading) return <div>/* TODO */</div>;
-  if (loadError) return <div>/* TODO */</div>;
-  if (!paper) return <div>/* TODO */</div>;
+  if (loading) return <div>Loading paper details...</div>;
+  if (loadError) return <div>Error loading paper</div>;
+  if (!paper) return <div>Paper not found</div>;
 
   return (
     <div>
@@ -106,8 +122,7 @@ export default function EditPaper() {
 
       <PaperForm paper={paper} onSubmit={handleUpdatePaper} />
 
-      {/* TODO: Show message in DOM */}
-      {message && <div>{/* TODO */}</div>}
+      {message && <div>{message}</div>}
     </div>
   );
 }

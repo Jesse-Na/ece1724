@@ -22,7 +22,6 @@ export default function Home() {
   const [message, setMessage] = useState<string | null>(null);
 
   /**
-   * TODO:
    * Implement paper creation logic.
    *
    * Steps required:
@@ -44,34 +43,48 @@ export default function Home() {
    */
   const handleCreatePaper = async (paperData: PaperFormData) => {
     try {
-      // TODO: clear message
+      setMessage(null);
 
-      // TODO: fetch("/api/authors")
-      // TODO: if response not ok, throw new Error()
-      // TODO: parse as AuthorsListResponse
+      const response = await fetch("/api/authors");
+      if (!response.ok) {
+        throw new Error();
+      }
 
-      // TODO:
-      // Map paperData.authorIds -> full author objects
-      // Then transform into minimal AuthorInput objects
-      // (name, email, affiliation)
+      const data: AuthorsListResponse = await response.json();
+
+      const authors = paperData.authorIds.map((id) => {
+        const author = data.authors.find((author) => author.id === id);
+        return {
+          name: author?.name!,
+          email: author?.email ?? null,
+          affiliation: author?.affiliation ?? null,
+        };
+      });
 
       const createPayload: PaperCreatePayload = {
         title: paperData.title,
         publishedIn: paperData.publishedIn,
         year: paperData.year,
-        authors: [], // TODO: replace with mapped authors
+        authors: authors,
       };
 
-      // TODO: POST /api/papers with JSON body
+      const response2 = await fetch("/api/papers", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(createPayload),
+      });
 
-      // TODO: if response not ok, throw new Error()
+      if (!response2.ok) {
+        throw new Error();
+      }
 
-      // TODO: set message "Paper created successfully"
+      setMessage("Paper created successfully");
 
-      // TODO: Reload page after 3 seconds
-      // setTimeout(() => window.location.reload(), 3000);
+      setTimeout(() => window.location.reload(), 3000);
     } catch {
-      // TODO: set message "Error creating paper"
+      setMessage("Error creating paper");
     }
   };
 
