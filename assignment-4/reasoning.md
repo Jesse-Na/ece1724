@@ -1,6 +1,6 @@
 ## Q1: Before coding, what did you think would be the hardest part?
 
-I think the hardest part will be figuring out how to implement `routes`, specifically the request logic sent to the backend. For example, just from looking at the descriptions, I don't quite understand what it's saying when it talks about additional steps we must take when creating or updating a paper. This part also seems the most prone to miscellaneous errors, possibly due to my database configuration or something with Vite.
+I think the hardest part will be defining and using server actions to create a paper or author because I am not familiar with the concept or workflow. I think the tricky part might be figuring out the asynchronous stuff (e.g. when do I call await) inside the body of my action and when I am calling the action.
 
 ## Q2: Did you use AI?
 

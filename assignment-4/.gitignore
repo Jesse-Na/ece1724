@@ -7,3 +7,5 @@ logfile
 prisma/migrations
 http/
 test-results
+.next/
+.next/*
