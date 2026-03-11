@@ -3,14 +3,6 @@
 import { prisma } from "./prisma";
 
 export async function createPaper(formData: FormData) {
-	// TODO: Implement paper creation with validation
-	// - Show appropriate error messages for:
-	//    - "Title is required"
-	//    - "Publication venue is required"
-	//    - "Publication year is required"
-	//    - "Valid year after 1900 is required"
-	//    - "Please select at least one author"
-	// - Create paper with Prisma
 	const title = formData.get("title");
 	const publishedIn = formData.get("publishedIn");
 	const year = formData.get("year");
@@ -49,9 +41,6 @@ export async function createPaper(formData: FormData) {
 }
 
 export async function createAuthor(formData: FormData) {
-	// TODO: Implement author creation with validation
-	// - Show "Name is required" if empty string or string containing only whitespace
-	// - Create author with Prisma, including optional email and affiliation
 	const name = formData.get("name");
 	const email = formData.get("email");
 	const affiliation = formData.get("affiliation");

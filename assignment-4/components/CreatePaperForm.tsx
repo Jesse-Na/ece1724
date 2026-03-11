@@ -17,13 +17,11 @@ export default function CreatePaperForm({ authors }: CreatePaperFormProps) {
 	const handleAction = async (formData: FormData) => {
 		try {
 			await createPaper(formData);
-			// TODO: Set success message and redirect to "/" after 3 seconds
 			setMessage("Paper created successfully");
 			setTimeout(() => {
 				router.push("/");
 			}, 3000);
 		} catch (error) {
-			// TODO: Set error message
 			if (error instanceof Error) {
 				setMessage(error.message);
 			} else {
@@ -36,7 +34,6 @@ export default function CreatePaperForm({ authors }: CreatePaperFormProps) {
 		<div className="space-y-4">
 			<PaperForm action={handleAction} authors={authors} />
 
-			{/* TODO: Display status message using the required Tailwind CSS utility classes */}
 			{message && (
 				<p
 					data-testid="status-message"

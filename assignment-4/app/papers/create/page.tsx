@@ -5,7 +5,6 @@ import type { Author } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 
 async function getAuthors(): Promise<Author[]> {
-	// TODO: Fetch authors from Prisma, sorted by id ascending
 	const authors = await prisma.author.findMany({
 		orderBy: {
 			id: "asc",

@@ -15,15 +15,12 @@ export default function CreateAuthor() {
 	const handleAction = async (formData: FormData) => {
 		startTransition(async () => {
 			try {
-				// TODO: Call createAuthor Server Action
 				await createAuthor(formData);
-				// TODO: Set success message and redirect to "/" after 3 seconds
 				setMessage("Author created successfully");
 				setTimeout(() => {
 					router.push("/");
 				}, 3000);
 			} catch (error) {
-				// TODO: Set error message
 				if (error instanceof Error) {
 					setMessage(error.message);
 				} else {
@@ -97,7 +94,6 @@ export default function CreateAuthor() {
 						Create Author
 					</Button>
 
-					{/* TODO: Display status message using the required Tailwind CSS utility classes */}
 					{message && (
 						<p
 							data-testid="status-message"
